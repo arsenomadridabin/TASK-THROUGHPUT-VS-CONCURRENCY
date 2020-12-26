@@ -39,7 +39,7 @@ def runServer(sck, conn, client, logs):
 def main():
 
     # option to set port when launching the server
-    parser = optparse.OptionParser("Usage: pyhon3 server.py -p <server port>")
+    parser = optparse.OptionParser("Usage: python3 server.py -p <server port>")
     parser.add_option('-p', dest='port', type='int', help="specify target port")
     (options, args) = parser.parse_args()
     port = options.port

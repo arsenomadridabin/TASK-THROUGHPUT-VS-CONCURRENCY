@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 HOST = '127.0.0.1'  # The server's hostname or IP address
-PORT = 5051    # The port used by the server
+PORT = 5050    # The port used by the server
 
 
 async def send_data(s,random_file):
@@ -22,25 +22,36 @@ async def send_data(s,random_file):
 	s.sendall(data)
 	r_data = s.recv(202400)
 
-async def get_data(concurrency):
+async def get_data(concurrency,folder_name,no_of_files):
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.connect((HOST, PORT))
 		send_time = time.time()
-		list_files = os.listdir(os.getcwd()+"/10")
-		no_of_slots = int(100/concurrency) + 1 if int(100/concurrency) != float(100/concurrency) else int(100/concurrency)
+		list_files = os.listdir(os.getcwd()+"/"+folder_name)
+		no_of_slots = int(no_of_files/concurrency) + 1 if int(no_of_files/concurrency) != float(no_of_files/concurrency) else int(no_of_files/concurrency)
 		for i in range(no_of_slots):
 			files_this_iteration = list_files[concurrency*i: (concurrency*i + concurrency)]
 			await asyncio.gather(*[send_data(s,x) for x in files_this_iteration])
-			print("Chunk : {} transfered".format(i))
-		s.close()
+			print(i)
 
 
 if __name__ == "__main__":
 	import time
 	throughputs = []
+
+	parser = optparse.OptionParser("Usage: python3 concurrent_client.py -n <Concurrency Number> -f  <folder nam> -s <no of files>")
+	parser.add_option('-n', dest='concurrency', type='int', help="specify concurrency number")
+	parser.add_option('-f', dest='folder_name', type='str', help="specify folder name")
+	parser.add_option('-s', dest='no_of_files', type='int', help="specify no of files in a folder")
+	(options, args) = parser.parse_args()
+	concurrency = options.concurrency
+	folder_name = options.folder_name
+	no_of_files = options.no_of_files
+
+	print("no of files=",no_of_files)
+
 	for concurrency in [1,2,4,8]:
 		s = time.perf_counter()
-		asyncio.run(get_data(concurrency))
+		asyncio.run(get_data(concurrency,folder_name,no_of_files))
 		elapsed = time.perf_counter() - s
 		print(f"{__file__} Data Transfered in {elapsed:0.2f} seconds.")
 		print("Throughput for concurrency {} : {}".format(concurrency,(1024/elapsed)))

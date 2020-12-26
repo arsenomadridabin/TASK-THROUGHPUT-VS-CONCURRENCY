@@ -56,7 +56,8 @@ if __name__ == "__main__":
 	plt.title("10MB Data Transfer")
 	plt.xlabel("Concurrency")
 	plt.ylabel("Throughput (Mbps)")
-
+	
+	#Value of y here generated from next script and placed here for plotting purpose only
 	x = np.array([1, 2, 4, 8])
 	y = np.array([12, 20, 22, 23])
 

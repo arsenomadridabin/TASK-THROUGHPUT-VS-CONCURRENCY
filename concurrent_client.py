@@ -7,17 +7,22 @@ import time
 import math
 import optparse
 import os
+import hashlib
 
 HOST = '127.0.0.1'  # The server's hostname or IP address
 PORT = 5050    # The port used by the server
 
 
-async def send_data(s,random_file):
-	f = open('./10/{}'.format(random_file),'rb')
+async def send_data(s,random_file,folder_name):
+	f = open('./{}/{}'.format(folder_name,random_file),'rb')
 	data = f.read()
 	data_size = len(data)
 	data_in_mb = data_size/math.pow(10,6)
-	s.sendall(data)
+	md5_of_data = hashlib.md5(data).hexdigest()
+
+	"""Send md5 of data along with data for integrity check"""
+	data = data.decode() + "md5-begins:{}:md5-ends".format(md5_of_data)
+	s.sendall(data.encode())
 	r_data = s.recv(202400)
 
 async def get_data(concurrency,folder_name,no_of_files):
@@ -28,8 +33,7 @@ async def get_data(concurrency,folder_name,no_of_files):
 		no_of_slots = int(no_of_files/concurrency) + 1 if int(no_of_files/concurrency) != float(no_of_files/concurrency) else int(no_of_files/concurrency)
 		for i in range(no_of_slots):
 			files_this_iteration = list_files[concurrency*i: (concurrency*i + concurrency)]
-			await asyncio.gather(*[send_data(s,x) for x in files_this_iteration])
-			print(i)
+			await asyncio.gather(*[send_data(s,x,folder_name) for x in files_this_iteration])
 
 
 if __name__ == "__main__":
